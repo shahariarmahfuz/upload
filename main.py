@@ -57,6 +57,7 @@ def upload_large_file(file_stream, dbx_path, dbx_instance):
     cursor = dropbox.files.UploadSessionCursor(
         session_id=upload_session.session_id,
         offset=len(first_chunk)
+    )  # এখানে বন্ধনী বন্ধ করা হয়েছে
     commit = dropbox.files.CommitInfo(path=dbx_path, mode=dropbox.files.WriteMode.overwrite)
 
     while True:
