@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Uploaded Files</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+        th { background-color: #f4f4f4; }
+        .download-link { word-break: break-all; color: #2196F3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📁 Uploaded Files</h1>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>File Name</th>
+                    <th>File Type</th>
+                    <th>Download Link</th>
+                    <th>Upload Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for file in files %}
+                <tr>
+                    <td>{{ file.filename }}</td>
+                    <td>{{ file.type }}</td>
+                    <td><a class="download-link" href="{{ file.link }}" target="_blank">{{ file.link }}</a></td>
+                    <td>{{ file.timestamp }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
