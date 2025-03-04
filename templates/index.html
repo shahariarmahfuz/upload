@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ফাইল আপলোড</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .upload-section { margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        input[type="file"], input[type="url"] { margin: 10px 0; width: 100%; padding: 8px; }
+        button { padding: 10px 20px; background: #0066cc; color: white; border: none; cursor: pointer; }
+        .success-message { margin-top: 20px; padding: 15px; background: #e8f5e9; border: 1px solid #4CAF50; border-radius: 4px; }
+        .download-link { word-break: break-all; color: #2196F3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📁 ফাইল আপলোড</h1>
+
+        <div class="upload-section">
+            <h3>ডিভাইস থেকে আপলোড</h3>
+            <form method="POST" action="/upload" enctype="multipart/form-data">
+                <input type="file" name="file" required>
+                <button type="submit">আপলোড করুন</button>
+            </form>
+        </div>
+
+        <div class="upload-section">
+            <h3>ক্লাউড লিংক থেকে আপলোড</h3>
+            <form method="POST" action="/cloud_upload">
+                <input type="url" name="url" placeholder="লিংক দিন (যেমন: https://example.com/video.mp4)" required>
+                <button type="submit">লিংক থেকে আপলোড</button>
+            </form>
+        </div>
+
+        {% if facebook_links %}
+        <div class="success-message">
+            <h3>✅ আপলোড সফল!</h3>
+            <p>HD লিংক:</p>
+            <a class="download-link" href="{{ facebook_links.hd }}" target="_blank">{{ facebook_links.hd }}</a>
+            <p>SD লিংক:</p>
+            <a class="download-link" href="{{ facebook_links.sd }}" target="_blank">{{ facebook_links.sd }}</a>
+            <p><a href="/">আরেকটি ফাইল আপলোড করুন</a></p>
+        </div>
+        {% elif link %}
+        <div class="success-message">
+            <h3>✅ আপলোড সফল!</h3>
+            <p>ডাউনলোড লিংক:</p>
+            <a class="download-link" href="{{ link }}" target="_blank">{{ link }}</a>
+            <p><a href="/">আরেকটি ফাইল আপলোড করুন</a></p>
+        </div>
+        {% endif %}
+
+        <p style="margin-top: 20px;"><a href="/links">সকল আপলোডেড ফাইল দেখুন</a></p>
+    </div>
+</body>
+</html>
