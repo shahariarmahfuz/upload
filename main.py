@@ -7,7 +7,7 @@ from datetime import datetime
 import time
 import threading
 import os
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
@@ -22,7 +22,7 @@ dbx = dropbox.Dropbox(DROPBOX_TOKEN)
 generated_uuids = set()
 uploaded_files = []
 
-CHUNK_SIZE = 8 * 1024 * 1024  # 8MB চাঙ্ক সাইজ
+CHUNK_SIZE = 128 * 1024 * 1024  # 128MB চাঙ্ক সাইজ
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
@@ -48,24 +48,29 @@ def generate_custom_uuid():
             generated_uuids.add(custom_uuid)
             return custom_uuid
 
-def upload_large_file(file_stream, dbx_path, dbx_instance):
-    first_chunk = file_stream.read(CHUNK_SIZE)
-    if not first_chunk:
-        raise ValueError("ফাইলটি খালি")
-
-    upload_session = dbx_instance.files_upload_session_start(first_chunk)
-    cursor = dropbox.files.UploadSessionCursor(
-        session_id=upload_session.session_id,
-        offset=len(first_chunk)
-    )  # এখানে বন্ধনী বন্ধ করা হয়েছে
-    commit = dropbox.files.CommitInfo(path=dbx_path, mode=dropbox.files.WriteMode.overwrite)
-
+def upload_large_file_parallel(file_stream, dbx_path, dbx_instance):
+    chunks = []
     while True:
         chunk = file_stream.read(CHUNK_SIZE)
         if not chunk:
             break
+        chunks.append(chunk)
+
+    upload_session = dbx_instance.files_upload_session_start(chunks[0])
+    cursor = dropbox.files.UploadSessionCursor(
+        session_id=upload_session.session_id,
+        offset=len(chunks[0])
+    )
+    commit = dropbox.files.CommitInfo(path=dbx_path, mode=dropbox.files.WriteMode.overwrite)
+
+    def upload_chunk(chunk):
         dbx_instance.files_upload_session_append_v2(chunk, cursor)
         cursor.offset += len(chunk)
+
+    with ThreadPoolExecutor(max_workers=16) as executor:
+        futures = [executor.submit(upload_chunk, chunk) for chunk in chunks[1:]]
+        for future in as_completed(futures):
+            future.result()
 
     dbx_instance.files_upload_session_finish(b'', cursor, commit)
 
@@ -80,7 +85,8 @@ def upload_from_url(url, dbx_path, dbx_instance):
         upload_session = dbx_instance.files_upload_session_start(first_chunk)
         cursor = dropbox.files.UploadSessionCursor(
             session_id=upload_session.session_id,
-            offset=len(first_chunk))
+            offset=len(first_chunk)
+        )
         commit = dropbox.files.CommitInfo(path=dbx_path, mode=dropbox.files.WriteMode.overwrite)
 
         for chunk in chunk_generator:
@@ -140,7 +146,7 @@ def upload_file():
             dbx_path = f"/{new_filename}"
 
             file.stream.seek(0)
-            upload_large_file(file.stream, dbx_path, dbx)
+            upload_large_file_parallel(file.stream, dbx_path, dbx)
 
             shared_link = dbx.sharing_create_shared_link_with_settings(dbx_path)
             download_link = shared_link.url.replace("dl=0", "raw=1")
