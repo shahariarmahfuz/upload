@@ -24,6 +24,14 @@ uploaded_files = []
 
 CHUNK_SIZE = 128 * 1024 * 1024  # 128MB চাঙ্ক সাইজ
 
+# API টোকেন লিস্ট
+API_TOKENS = [
+    '3d74cfda87msh25f14e67ab30bacp106cdfjsnc33f950ca32f',
+    'f65f8f32cemshd3f48c4731a99fcp153734jsn162186000da2',
+    'a5037965bamsh20965b59564899bp13fff0jsn336df3e8acb4'
+]
+current_token_index = 0
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
@@ -96,10 +104,17 @@ def upload_from_url(url, dbx_path, dbx_instance):
 
         dbx_instance.files_upload_session_finish(b'', cursor, commit)
 
+def get_next_token():
+    global current_token_index
+    token = API_TOKENS[current_token_index]
+    current_token_index = (current_token_index + 1) % len(API_TOKENS)
+    print(f"Using API Token: {token}")
+    return token
+
 def handle_facebook_upload(video_url):
     headers = {
         'x-rapidapi-host': 'facebook-reel-and-video-downloader.p.rapidapi.com',
-        'x-rapidapi-key': 'a5037965bamsh20965b59564899bp13fff0jsn336df3e8acb4'
+        'x-rapidapi-key': get_next_token()
     }
     params = {'url': video_url}
     
