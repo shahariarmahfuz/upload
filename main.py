@@ -265,7 +265,7 @@ def ping():
     return jsonify({"status": "alive"})
 
 def keep_alive():
-    url = "https://your-app-name.onrender.com/ping"  # আপনার এপ্লিকেশনের URL দিয়ে পরিবর্তন করুন
+    url = "https://upload-tzft.onrender.com/ping"  # আপনার এপ্লিকেশনের URL দিয়ে পরিবর্তন করুন
     while True:
         time.sleep(300)
         try:
